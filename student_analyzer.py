@@ -47,7 +47,7 @@ def main():
 
     # Processing and Displaying Results
     print("\n" + "="*30)
-    print("Student | Marks | Grade")
+    print("--- FINAL STUDENT REPORT ---")
     print("-" * 30)
     
     # Dictionary to store averages for topper calculation
@@ -57,8 +57,11 @@ def main():
         avg = calculate_average(marks)
         averages[name] = avg
         grade = get_grade(avg)
-        # Show actual marks list instead of individual average per student
-        print(name, "|", marks, "|", grade)
+        
+        # Display each student's name, their actual marks list, and their grade
+        print(f"Student: {name}")
+        print(f"  > Marks: {marks}")
+        print(f"  > Grade: {grade}\n")
 
     # Finding the topper using a basic loop (replaces the lambda/max function)
     topper_name = ""
@@ -71,8 +74,8 @@ def main():
     class_avg = sum(averages.values()) / len(averages)
 
     print("-" * 30)
-    print("Class Average:", class_avg)
-    print("Topper:", topper_name, "with average:", highest_avg)
+    print(f"Overall Class Average: {class_avg:.2f}")
+    print(f"Class Topper: {topper_name} ({highest_avg:.2f})")
     print("="*30)
 
 if __name__ == "__main__":
