@@ -70,7 +70,8 @@ def add_student(event):
     try:
         marks_list = [float(m.strip()) for m in marks_text.split(",")]
         avg = calculate_average(marks_list)
-        # Store both marks and average in the dictionary
+        
+        # Store both raw marks and the calculated average for the student
         all_students[name] = {"marks": marks_list, "avg": avg}
         
         display = "--- Current Results ---\n"
@@ -84,18 +85,22 @@ def add_student(event):
             total_sum_of_averages += s_avg
             
             grade = get_grade(s_avg)
-            # Show actual marks instead of average here
-            display += f"Student: {s_name} | Marks: {s_marks} | Grade: {grade}\n"
+            
+            # Display student name, their raw marks list, and their grade
+            display += f"Student: {s_name}\n"
+            display += f"  > Marks: {s_marks}\n"
+            display += f"  > Grade: {grade}\n\n"
             
             if s_avg > highest_avg:
                 highest_avg = s_avg
                 topper_name = s_name
 
+        # Calculate the combined average of all students
         class_avg = total_sum_of_averages / len(all_students)
 
         display += "\n" + "-"*20 + "\n"
-        display += f"Class Average: {class_avg:.2f}\n"
-        display += f"Current Topper: {topper_name} ({highest_avg:.2f})"
+        display += f"Overall Class Average: {class_avg:.2f}\n"
+        display += f"Class Topper: {topper_name} ({highest_avg:.2f})"
         
         output_div.innerText = display
     except Exception as e:
