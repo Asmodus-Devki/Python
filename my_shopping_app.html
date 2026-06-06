@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Devkinandan's Marketplace</title>
+    <link rel="stylesheet" href="https://pyscript.net/releases/2024.1.1/core.css">
+    <script type="module" src="https://pyscript.net/releases/2024.1.1/core.js"></script>
+    <style>
+        body { font-family: 'Segoe UI', sans-serif; margin: 20px; background-color: #f0f2f5; }
+        .container { max-width: 900px; margin: auto; background: white; padding: 30px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); }
+        h1 { color: #1a73e8; text-align: center; margin-top: 0; }
+        .back-link { margin-bottom: 20px; display: block; color: #5f6368; text-decoration: none; font-weight: bold; }
+        
+        .shop-layout { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-top: 20px; }
+        .section { border: 1px solid #e0e0e0; padding: 15px; border-radius: 8px; }
+        h2 { font-size: 1.2rem; color: #3c4043; border-bottom: 2px solid #1a73e8; padding-bottom: 5px; }
+
+        select, button { width: 100%; padding: 10px; margin: 10px 0; border-radius: 5px; border: 1px solid #dadce0; }
+        button { background-color: #1a73e8; color: white; border: none; cursor: pointer; font-weight: bold; }
+        button:hover { background-color: #1557b0; }
+        
+        #product-list, #cart-display { list-style: none; padding: 0; }
+        .item { display: flex; justify-content: space-between; align-items: center; padding: 8px; border-bottom: 1px solid #f1f1f1; font-size: 0.9rem; }
+        .add-btn { width: auto; padding: 5px 10px; font-size: 0.8rem; margin: 0; background-color: #34a853; }
+        
+        #status-msg { margin-top: 20px; padding: 10px; border-radius: 5px; background: #e8f0fe; color: #1967d2; font-family: monospace; white-space: pre-wrap; }
+        .total { font-weight: bold; font-size: 1.1rem; text-align: right; margin-top: 10px; display: block; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <a href="index.html" class="back-link">← Back to Portfolio</a>
+    <h1>Devkinandan's Marketplace</h1>
+
+    <div class="shop-layout">
+        <!-- Catalog Section -->
+        <div class="section">
+            <h2>Browse Catalog</h2>
+            <label for="category-select">Select Category:</label>
+            <select id="category-select" py-change="update_catalog">
+                <option value="Fruits">Fruits</option>
+                <option value="Vegetables">Vegetables</option>
+                <option value="Groceries">Groceries</option>
+                <option value="Sweets">Sweets</option>
+                <option value="Bakery">Bakery</option>
+            </select>
+            <div id="product-list"></div>
+        </div>
+
+        <!-- Cart Section -->
+        <div class="section">
+            <h2>Your Shopping Cart</h2>
+            <div id="cart-display">Your cart is empty</div>
+            <span class="total" id="cart-total">Total: ₹ 0.00</span>
+            <button id="checkout-btn" py-click="checkout">Proceed to Payment</button>
+        </div>
+    </div>
+
+    <div id="status-msg">Welcome! Select a category to start shopping.</div>
+</div>
+
+<script type="py">
+from pyscript import document, window
+
+# Database from your original script
+categories = {
+    'Fruits': [
+        {'id': 1, 'name': 'Apples', 'price': 100.00},
+        {'id': 2, 'name': 'Mangoes', 'price': 60.00},
+        {'id': 3, 'name': 'Oranges', 'price': 80.00}
+    ],
+    'Vegetables': [
+        {'id': 4, 'name': 'Onions', 'price': 100.00},
+        {'id': 5, 'name': 'Tomatoes', 'price': 60.00},
+        {'id': 6, 'name': 'Potatoes', 'price': 50.00}
+    ],
+    'Groceries': [
+        {'id': 7, 'name': 'Rice', 'price': 80.00},
+        {'id': 8, 'name': 'Dal', 'price': 60.00}
+    ],
+    'Sweets': [
+        {'id': 9, 'name': 'Rasgulla', 'price': 100.00},
+        {'id': 10, 'name': 'Laddu', 'price': 80.00}
+    ],
+    'Bakery': [
+        {'id': 11, 'name': 'Cakes', 'price': 100.00},
+        {'id': 12, 'name': 'Pastries', 'price': 60.00}
+    ]
+}
+
+cart = []
+
+def update_catalog(event=None):
+    category = document.querySelector("#category-select").value
+    products = categories.get(category, [])
+    catalog_div = document.querySelector("#product-list")
+    catalog_div.innerHTML = ""
+
+    for p in products:
+        item_div = document.createElement("div")
+        item_div.className = "item"
+        item_div.innerHTML = f"<span>{p['name']} - ₹{p['price']}</span>"
+        
+        # Create a button to add to cart
+        btn = document.createElement("button")
+        btn.innerText = "Add"
+        btn.className = "add-btn"
+        # Using a closure to capture product info
+        def make_add_handler(prod):
+            def handler(e):
+                add_to_cart(prod)
+            return handler
+        
+        btn.onclick = make_add_handler(p)
+        item_div.appendChild(btn)
+        catalog_div.appendChild(item_div)
+
+def add_to_cart(product):
+    cart.append(product)
+    render_cart()
+    document.querySelector("#status-msg").innerText = f"Added {product['name']} to cart."
+
+def render_cart():
+    cart_div = document.querySelector("#cart-display")
+    total_span = document.querySelector("#cart-total")
+    
+    if not cart:
+        cart_div.innerText = "Your cart is empty"
+        total_span.innerText = "Total: ₹ 0.00"
+        return
+
+    cart_div.innerHTML = ""
+    total = 0
+    for i, item in enumerate(cart):
+        total += item['price']
+        item_div = document.createElement("div")
+        item_div.className = "item"
+        item_div.innerHTML = f"<span>{item['name']}</span><span>₹{item['price']}</span>"
+        
+        remove_btn = document.createElement("button")
+        remove_btn.innerText = "×"
+        remove_btn.className = "add-btn"
+        remove_btn.style.backgroundColor = "#ea4335"
+        
+        def make_remove_handler(index):
+            def handler(e):
+                cart.pop(index)
+                render_cart()
+            return handler
+            
+        remove_btn.onclick = make_remove_handler(i)
+        item_div.appendChild(remove_btn)
+        cart_div.appendChild(item_div)
+    
+    total_span.innerText = f"Total: ₹ {total:.2f}"
+
+def checkout(event):
+    if not cart:
+        document.querySelector("#status-msg").innerText = "Error: Cannot checkout with an empty cart!"
+        return
+    
+    total = sum(item['price'] for item in cart)
+    username = "Devkinandan" # Simulation
+    
+    message = f"Checkout Successful!\n"
+    message += f"User: {username}\n"
+    message += f"Amount to pay: ₹{total:.2f}\n"
+    message += "Redirecting to secure payment portal..."
+    
+    document.querySelector("#status-msg").innerText = message
+    # Clear cart after checkout
+    cart.clear()
+    render_cart()
+
+# Initialize catalog on load
+update_catalog()
+</script>
+</body>
+</html>

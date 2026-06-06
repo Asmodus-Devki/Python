@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Arithmetic Arranger</title>
+    <link rel="stylesheet" href="https://pyscript.net/releases/2024.1.1/core.css">
+    <script type="module" src="https://pyscript.net/releases/2024.1.1/core.js"></script>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; background-color: #f4f4f9; }
+        .container { max-width: 800px; margin: auto; background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
+        h1 { color: #333; text-align: center; }
+        .input-group { margin-bottom: 15px; }
+        label { display: block; margin-bottom: 5px; font-weight: bold; }
+        input[type="text"] { width: 100%; padding: 8px; box-sizing: border-box; border: 1px solid #ccc; border-radius: 4px; }
+        .checkbox-group { display: flex; align-items: center; gap: 10px; margin-bottom: 15px; }
+        button { width: 100%; padding: 10px; background-color: #28a745; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 16px; }
+        button:hover { background-color: #218838; }
+        #output { margin-top: 20px; white-space: pre; background: #222; color: #00ff00; padding: 20px; border-radius: 4px; font-family: 'Courier New', Courier, monospace; overflow-x: auto; }
+        .back-link { margin-bottom: 20px; display: block; color: #007bff; text-decoration: none; font-weight: bold; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <a href="index.html" class="back-link">← Back to Portfolio</a>
+    <h1>Arithmetic Arranger</h1>
+    
+    <div class="input-group">
+        <label for="problems-input">Enter problems (separated by commas):</label>
+        <input type="text" id="problems-input" placeholder="e.g. 32 + 698, 3801 - 2, 45 + 43, 123 + 49">
+    </div>
+
+    <div class="checkbox-group">
+        <input type="checkbox" id="show-answers">
+        <label for="show-answers">Show Answers</label>
+    </div>
+
+    <button id="run-btn" py-click="run_arranger">Arrange Problems</button>
+
+    <div id="output">Arranged problems will appear here...</div>
+</div>
+
+<script type="py">
+from pyscript import document
+
+def arithmetic_arranger(problems, show_answers=False):
+    if len(problems) > 5:
+        return "Error: Too many problems."
+
+    top_row = []
+    bottom_row = []
+    dashes = []
+    solutions = []
+
+    for problem in problems:
+        try:
+            num1, operator, num2 = problem.split()
+        except ValueError:
+            return "Error: Invalid format. Use 'Num Operator Num'."
+
+        if operator not in ('+', '-'):
+            return "Error: Operator must be '+' or '-'."
+        if not (num1.isdigit() and num2.isdigit()):
+            return "Error: Numbers must only contain digits."
+        if len(num1) > 4 or len(num2) > 4:
+            return "Error: Numbers cannot be more than four digits."
+
+        width = max(len(num1), len(num2)) + 2
+        top_row.append(num1.rjust(width))
+        bottom_row.append(operator + ' ' + num2.rjust(width - 2))
+        dashes.append('-' * width)
+        solutions.append(str(eval(problem)).rjust(width))
+
+    arranged_problems = '    '.join(top_row) + '\n' + \
+                        '    '.join(bottom_row) + '\n' + \
+                        '    '.join(dashes)
+
+    if show_answers:
+        arranged_problems += '\n' + '    '.join(solutions)
+
+    return arranged_problems
+
+def run_arranger(event):
+    input_text = document.querySelector("#problems-input").value.strip()
+    show_answers = document.querySelector("#show-answers").checked
+    output_div = document.querySelector("#output")
+
+    if not input_text:
+        output_div.innerText = "Please enter some problems."
+        return
+
+    # Split the input by commas and clean up spaces
+    problem_list = [p.strip() for p in input_text.split(",")]
+    result = arithmetic_arranger(problem_list, show_answers)
+    output_div.innerText = result
+</script>
+
+</body>
+</html>
