@@ -38,7 +38,18 @@
 </header>
 
 <div class="container">
-    <div class="form-section">
+    <!-- Setup Section -->
+    <div id="setup-section" class="form-section">
+        <div class="input-group full-width">
+            <label for="num-students">How many students are in the class?</label>
+            <input type="number" id="num-students" placeholder="Enter total number of students">
+        </div>
+        <button class="btn-add full-width" py-click="setup_tracker">Start Tracking Attendance</button>
+    </div>
+
+    <!-- Entry Section (Hidden by default) -->
+    <div id="entry-section" class="form-section" style="display: none;">
+        <h3 id="progress-text" class="full-width" style="margin: 0; color: #28a745;">Recording Student 1</h3>
         <div class="input-group full-width">
             <label for="name">Student Name</label>
             <input type="text" id="name" placeholder="Enter student name">
@@ -64,6 +75,8 @@
 from pyscript import document
 
 students_data = {}
+total_to_record = 0
+current_recorded = 0
 
 def calculate_percentage(attended, total):
     if attended < 0 or total < 0:
@@ -72,7 +85,28 @@ def calculate_percentage(attended, total):
         return 0.0
     return (attended / total) * 100
 
+def setup_tracker(event):
+    global total_to_record, current_recorded
+    num_input = document.getElementById("num-students")
+    status_msg = document.getElementById("status-msg")
+    
+    try:
+        val = int(num_input.value)
+        if val <= 0:
+            status_msg.innerHTML = '<span class="error">Please enter a positive number of students.</span>'
+            return
+        total_to_record = val
+        current_recorded = 0
+        
+        document.getElementById("setup-section").style.display = "none"
+        document.getElementById("entry-section").style.display = "grid"
+        document.getElementById("progress-text").innerText = f"Recording Student 1 of {total_to_record}"
+        status_msg.innerHTML = ""
+    except ValueError:
+        status_msg.innerHTML = '<span class="error">Please enter a valid number.</span>'
+
 def add_student(event):
+    global current_recorded
     name_input = document.getElementById("name")
     attended_input = document.getElementById("attended")
     total_input = document.getElementById("total")
@@ -104,21 +138,25 @@ def add_student(event):
         'status': "Eligible" if percentage >= 75 else "Defaulter"
     }
 
-    # Clear inputs and reset message
-    name_input.value = ""
-    attended_input.value = ""
-    total_input.value = ""
-    status_msg.innerHTML = '<span style="color: #28a745; font-weight: bold;">Record added!</span>'
+    current_recorded += 1
 
-    render_ui()
+    if current_recorded < total_to_record:
+        # Reset inputs for next student
+        name_input.value = ""
+        attended_input.value = ""
+        total_input.value = ""
+        document.getElementById("progress-text").innerText = f"Recording Student {current_recorded + 1} of {total_to_record}"
+        status_msg.innerHTML = f'<span style="color: #28a745;">Student {current_recorded} added.</span>'
+    else:
+        # Done recording
+        document.getElementById("entry-section").style.display = "none"
+        status_msg.innerHTML = '<span style="color: #28a745; font-weight: bold;">All records captured! Generating report...</span>'
+        render_ui()
 
 def render_ui():
     report_area = document.getElementById("report-area")
-    if not students_data:
-        return
-
     # Build Table
-    html = "<h3>Current Records</h3><table><thead><tr><th>Name</th><th>Attendance</th><th>Status</th></tr></thead><tbody>"
+    html = "<h3>Final Attendance Records</h3><table><thead><tr><th>Name</th><th>Attendance</th><th>Status</th></tr></thead><tbody>"
     
     total_perc = 0
     eligible_count = 0
@@ -143,12 +181,13 @@ def render_ui():
     avg = total_perc / len(students_data)
     summary = f"""
     <div class="report-summary">
-        <h3>Attendance Report</h3>
+        <h3>Class Summary Report</h3>
         <p><strong>Total Students:</strong> {len(students_data)}</p>
         <p><strong>Eligible:</strong> {eligible_count}</p>
         <p><strong>Average Attendance:</strong> {avg:.2f}%</p>
         <p><strong>Defaulters:</strong> {len(defaulters)}</p>
         {"<p><strong>Defaulter List:</strong> " + ", ".join(defaulters) + "</p>" if defaulters else ""}
+        <button class="btn-add" style="margin-top: 1rem; width: auto;" onclick="window.location.reload()">Reset and Start New</button>
     </div>
     """
     report_area.innerHTML = html + summary
