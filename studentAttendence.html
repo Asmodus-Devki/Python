@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Student Attendance Tracker</title>
+    <link rel="stylesheet" href="https://pyscript.net/releases/2024.1.1/core.css">
+    <script type="module" src="https://pyscript.net/releases/2024.1.1/core.js"></script>
+    <style>
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; line-height: 1.6; margin: 0; padding: 0; background-color: #f4f7f6; color: #333; }
+        header { background-color: #28a745; color: white; padding: 2.5rem 1rem; text-align: center; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
+        .container { max-width: 800px; margin: 2rem auto; padding: 2rem; background: white; border-radius: 10px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); }
+        .form-section { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 2rem; padding-bottom: 2rem; border-bottom: 2px solid #eee; }
+        .full-width { grid-column: span 2; }
+        .input-group { display: flex; flex-direction: column; }
+        label { font-weight: bold; margin-bottom: 0.5rem; color: #555; }
+        input { padding: 0.75rem; border: 1px solid #ddd; border-radius: 5px; font-size: 1rem; }
+        .btn-add { background-color: #28a745; color: white; border: none; padding: 1rem; border-radius: 5px; font-weight: bold; cursor: pointer; font-size: 1rem; transition: background 0.3s; }
+        .btn-add:hover { background-color: #218838; }
+        #status-msg { margin-top: 1rem; text-align: center; min-height: 1.5rem; }
+        .error { color: #d9534f; font-weight: bold; padding: 10px; background: #fdf2f2; border-radius: 5px; border: 1px solid #f9d6d6; display: block; }
+        table { width: 100%; border-collapse: collapse; margin-top: 1.5rem; }
+        th { background-color: #f8f9fa; color: #555; text-align: left; padding: 1rem; border-bottom: 2px solid #dee2e6; }
+        td { padding: 1rem; border-bottom: 1px solid #eee; }
+        .defaulter { color: #d9534f; font-weight: bold; }
+        .eligible { color: #28a745; font-weight: bold; }
+        .report-summary { margin-top: 2rem; padding: 1.5rem; background: #e9f7ef; border-radius: 8px; border-left: 5px solid #28a745; }
+        .report-summary h3 { margin-top: 0; color: #1e7e34; }
+        .back-link { display: inline-block; margin-top: 2rem; color: #666; text-decoration: none; font-size: 0.9rem; }
+        .back-link:hover { text-decoration: underline; }
+    </style>
+</head>
+<body>
+
+<header>
+    <h1>Attendance Tracker</h1>
+    <p>Monitor student participation and eligibility with Python</p>
+</header>
+
+<div class="container">
+    <div class="form-section">
+        <div class="input-group full-width">
+            <label for="name">Student Name</label>
+            <input type="text" id="name" placeholder="Enter student name">
+        </div>
+        <div class="input-group">
+            <label for="attended">Classes Attended</label>
+            <input type="number" id="attended" placeholder="0">
+        </div>
+        <div class="input-group">
+            <label for="total">Total Classes</label>
+            <input type="number" id="total" placeholder="0">
+        </div>
+        <button class="btn-add full-width" id="add-btn" py-click="add_student">Add Student Record</button>
+    </div>
+
+    <div id="status-msg"></div>
+    <div id="report-area"></div>
+    
+    <a href="index.html" class="back-link">← Back to Portfolio</a>
+</div>
+
+<script type="py">
+from pyscript import document
+
+students_data = {}
+
+def calculate_percentage(attended, total):
+    if attended < 0 or total < 0:
+        return "no negative inputs please"
+    if total == 0:
+        return 0.0
+    return (attended / total) * 100
+
+def add_student(event):
+    name_input = document.getElementById("name")
+    attended_input = document.getElementById("attended")
+    total_input = document.getElementById("total")
+    status_msg = document.getElementById("status-msg")
+
+    name = name_input.value.strip()
+    try:
+        attended = int(attended_input.value)
+        total = int(total_input.value)
+    except ValueError:
+        status_msg.innerHTML = '<span class="error">Please enter valid numbers for classes.</span>'
+        return
+
+    if not name:
+        status_msg.innerHTML = '<span class="error">Please enter a student name.</span>'
+        return
+
+    percentage = calculate_percentage(attended, total)
+
+    if percentage == "no negative inputs please":
+        status_msg.innerHTML = f'<span class="error">{percentage}</span>'
+        return
+
+    # Store the data
+    students_data[name] = {
+        'attended': attended,
+        'total': total,
+        'percentage': percentage,
+        'status': "Eligible" if percentage >= 75 else "Defaulter"
+    }
+
+    # Clear inputs and reset message
+    name_input.value = ""
+    attended_input.value = ""
+    total_input.value = ""
+    status_msg.innerHTML = '<span style="color: #28a745; font-weight: bold;">Record added!</span>'
+
+    render_ui()
+
+def render_ui():
+    report_area = document.getElementById("report-area")
+    if not students_data:
+        return
+
+    # Build Table
+    html = "<h3>Current Records</h3><table><thead><tr><th>Name</th><th>Attendance</th><th>Status</th></tr></thead><tbody>"
+    
+    total_perc = 0
+    eligible_count = 0
+    defaulters = []
+
+    for name, info in students_data.items():
+        p = info['percentage']
+        total_perc += p
+        is_defaulter = p < 75
+        status_class = "defaulter" if is_defaulter else "eligible"
+        
+        if not is_defaulter:
+            eligible_count += 1
+        else:
+            defaulters.append(name)
+
+        html += f"<tr><td>{name}</td><td>{p:.2f}%</td><td class='{status_class}'>{info['status']}</td></tr>"
+    
+    html += "</tbody></table>"
+
+    # Build Summary
+    avg = total_perc / len(students_data)
+    summary = f"""
+    <div class="report-summary">
+        <h3>Attendance Report</h3>
+        <p><strong>Total Students:</strong> {len(students_data)}</p>
+        <p><strong>Eligible:</strong> {eligible_count}</p>
+        <p><strong>Average Attendance:</strong> {avg:.2f}%</p>
+        <p><strong>Defaulters:</strong> {len(defaulters)}</p>
+        {"<p><strong>Defaulter List:</strong> " + ", ".join(defaulters) + "</p>" if defaulters else ""}
+    </div>
+    """
+    report_area.innerHTML = html + summary
+</script>
+
+</body>
+</html>
